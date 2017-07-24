@@ -48,6 +48,7 @@ crashlytics.properties
 crashlytics-build.properties
 fabric.properties
 
+
 .idea/housing.iml
 
 .idea/inspectionProfiles/profiles_settings.xml
@@ -55,3 +56,4 @@ fabric.properties
 .idea/modules.xml
 
 .idea/vcs.xml
+
