@@ -43,4 +43,5 @@ y_ = tf.placeholder(tf.float32, 'y hat')
 error = tf.losses.mean_squared_error(y_, y)
 
 # gradient descent for learning
-trainstep = tf.train.GradientDescentOptimizer(.05).minimize(error)
+trainstep = tf.train.GradientDescentOptimizer(learning_rate).minimize(error)
+
