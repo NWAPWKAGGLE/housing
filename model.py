@@ -2,9 +2,6 @@ import tensorflow as tf
 from tqdm import tqdm
 import numpy as np
 
-
-
-
 ##these functions initialize weights and biases with non-zero values
 def xavier_init(size):
     in_dim = size[0]
@@ -29,7 +26,7 @@ def rmsle(predicted, real, length):
 
 #### HYPERPARAMETERS
 
-learning_rate = .05
+learning_rate = .005
 num_epochs = 10000
 num_training_inputs = 1460
 #list of training files
@@ -82,7 +79,6 @@ y = tf.matmul(a3, W4)+b4
 # expected output
 y_ = tf.placeholder(tf.float32)
 
-
 # root mean squared logarithmic error
 
 rmslerror = rmsle(y, y_, num_training_inputs)
@@ -131,6 +127,6 @@ with tf.Session() as sess:
 
     #variablesaver
     saver = tf.train.Saver()
-    save_path=saver.save(sess, "/data/variableSave")
+    save_path=saver.save(sess, "./savedmodels/variableSave")
     print("Model saved in file: %s" % save_path)
 
