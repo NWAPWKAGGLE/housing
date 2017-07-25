@@ -2,6 +2,9 @@ import tensorflow as tf
 from tqdm import tqdm
 import numpy as np
 
+##variable saver
+saver = tf.train.Saver()
+
 
 ##these functions initialize weights and biases with non-zero values
 def weight_variable(shape):
@@ -95,3 +98,5 @@ with tf.Session() as sess:
 
     print(sess.run(error, feed_dict={x: inputs, y_:expected_outputs}))
 
+    save_path = saver.save(sess, "save path")
+    print("Model saved in file: %s" % save_path)
