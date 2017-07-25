@@ -2,27 +2,30 @@ import tensorflow as tf
 from tqdm import tqdm
 import numpy as np
 
-##variable saver
-saver = tf.train.Saver()
-
-
 ##these functions initialize weights and biases with non-zero values
 def weight_variable(shape):
-    initial = tf.truncated_normal(shape, stddev=0.1)
+    initial = tf.truncated_normal(shape, stddev=.1)
     return tf.Variable(initial)
 
 def bias_variable(shape):
     initial = tf.constant(0.1, shape=shape)
     return tf.Variable(initial)
 
+def rmsle(predicted, real, length):
+    sum=0.0
+
+    p = tf.log(predicted*1000000+1)
+    r = tf.log(real*1000000+1)
+    sum = tf.reduce_sum(p - r)**2
+    return (sum/length)**0.5
 
 #### HYPERPARAMETERS
 
-learning_rate = .1
-num_epochs = 1000
+learning_rate = .001
+num_epochs = 10000
 num_training_inputs = 1460
 #list of training files
-filename_queue = tf.train.string_input_producer(["/Users/eliwinkelman/housing/data/5features.csv"])
+filename_queue = tf.train.string_input_producer(["./data/5features.csv"])
 #read files
 reader = tf.TextLineReader()
 key, value = reader.read(filename_queue)
@@ -47,22 +50,26 @@ b1 = bias_variable([15])
 ## output of first hidden layer
 a1 = tf.sigmoid(tf.matmul(x, W1) + b1)
 
-
 ## weights and biases for output layer - 1 neuron
 W2 = weight_variable([15, 1])
 b2 = bias_variable([1])
 
 # output of second layer/model
-y = tf.matmul(a1, W2)+b2
+y = tf.tanh(tf.matmul(a1, W2)+b2)
 
 # expected output
 y_ = tf.placeholder(tf.float32)
+
+
+# root mean squared logarithmic error
+
+rmslerror = rmsle(y, y_, num_training_inputs)
 
 # mean squared error
 error = tf.losses.mean_squared_error(y_, y)
 
 # gradient descent for learning
-trainstep = tf.train.GradientDescentOptimizer(learning_rate).minimize(error)
+trainstep = tf.train.AdamOptimizer(learning_rate).minimize(error)
 
 with tf.Session() as sess:
     # Populate filename queue
@@ -96,7 +103,5 @@ with tf.Session() as sess:
     for j in tqdm(range(num_epochs)):
         sess.run(trainstep, feed_dict = {x: inputs, y_: expected_outputs})
 
-    print(sess.run(error, feed_dict={x: inputs, y_:expected_outputs}))
+    print(sess.run(rmslerror, feed_dict = {x: inputs, y_: expected_outputs}))
 
-    save_path = saver.save(sess, "save path")
-    print("Model saved in file: %s" % save_path)
