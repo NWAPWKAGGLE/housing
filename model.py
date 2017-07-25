@@ -1,5 +1,5 @@
 import tensorflow as tf
-
+from tqdm import tqdm
 import numpy as np
 
 
@@ -7,7 +7,6 @@ import numpy as np
 def weight_variable(shape):
     initial = tf.truncated_normal(shape, stddev=0.1)
     return tf.Variable(initial)
-
 
 def bias_variable(shape):
     initial = tf.constant(0.1, shape=shape)
@@ -17,7 +16,7 @@ def bias_variable(shape):
 #### HYPERPARAMETERS
 
 learning_rate = .05
-num_epochs = 200
+num_epochs = 10000
 num_training_inputs = 1460
 #list of training files
 filename_queue = tf.train.string_input_producer(["/Users/eliwinkelman/housing/data/5features.csv"])
@@ -67,23 +66,32 @@ with tf.Session() as sess:
     # Start populating the filename queue.
     coord = tf.train.Coordinator()
     threads = tf.train.start_queue_runners(coord=coord)
+
+    #initialize the variables and graph
     init = tf.global_variables_initializer()
     sess.run(init)
 
+    #load in data
     inputs = []
     expected_outputs = []
-    for i in range(num_training_inputs):
 
+    #loop through by line
+    for i in tqdm(range(num_training_inputs)):
+
+        #grab line value
         feature, expected_output = sess.run([features, col6])
 
+        #add line to inputs/expected outputs
         inputs.append(feature)
-        expected_outputs.append(expected_outputs)
-    inputs = np.resize(inputs, (num_training_inputs, 5))
-    print (inputs)
+        expected_outputs.append(expected_output)
 
-    for j in range(num_epochs):
+    inputs = np.resize(inputs, (num_training_inputs, 5))
+
+    expected_outputs = np.resize(expected_outputs, (num_training_inputs, 1))
+
+    for j in tqdm(range(num_epochs)):
         sess.run(trainstep, feed_dict = {x: inputs, y_: expected_outputs})
 
-    print(sess.run(error, feed_dict={x: inputs}))
+    print(sess.run(error, feed_dict={x: inputs, y_:expected_outputs}))
     coord.request_stop()
     coord.join(threads)
