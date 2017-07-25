@@ -26,7 +26,7 @@ learning_rate = .001
 num_epochs = 1000
 num_training_inputs = 1460
 #list of training files
-filename_queue = tf.train.string_input_producer(["/Users/eliwinkelman/housing/data/5features.csv"])
+filename_queue = tf.train.string_input_producer(["./data/5features.csv"])
 #read files
 reader = tf.TextLineReader()
 key, value = reader.read(filename_queue)
