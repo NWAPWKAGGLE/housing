@@ -43,7 +43,7 @@ W1 = weight_variable([5, 10])
 b1 = bias_variable([10])
 
 ## output of first hidden layer
-a1 = tf.sigmoid(tf.matmul(W1, x) + b1)
+a1 = tf.sigmoid(tf.matmul(x, W1) + b1)
 
 
 ## weights and biases for output layer - 1 neuron
@@ -70,13 +70,13 @@ with tf.Session() as sess:
     init = tf.global_variables_initializer()
     sess.run(init)
 
-    data = np.empty((5, 1))
+    data = np.empty((1, 5))
     labels = np.array([])
     for i in range(1460):
 
         example, label = sess.run([features, col6])
 
-        data = np.concatenate(data, )
+        data = np.concatenate((data, example))
         labels = np.append(labels, label, axis=1)
 
     print (data)
