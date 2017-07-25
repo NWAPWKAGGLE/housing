@@ -129,6 +129,7 @@ with tf.Session() as sess:
 
     print(sess.run(rmslerror, feed_dict = {x: inputs, y_: expected_outputs}))
 
+    #variablesaver
     saver = tf.train.Saver()
     save_path=saver.save(sess, "/data/variableSave")
     print("Model saved in file: %s" % save_path)
