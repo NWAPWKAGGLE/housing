@@ -17,6 +17,19 @@ def bias_variable(shape):
 learning_rate = .05
 num_epochs = 200
 
+#list of training files
+filename_queue = tf.train.string_input_producer(["data/5features.csv"])
+#read files
+reader = tf.TextLineReader()
+key, value = reader.read(filename_queue)
+
+#default values and type of input
+record_defaults = [[9000], [1989], [3], [6], [2007]]
+
+#read columns
+col1, col2, col3, col4, col5 = tf.decode_csv(value, record_defaults=record_defaults)
+features = tf.stack([col1, col2, col3, col4])
+
 #### MODEL
 
 # this is the placeholder for the inputs. takes an arbitrary size of training set with 5 features in each example
@@ -44,4 +57,5 @@ error = tf.losses.mean_squared_error(y_, y)
 
 # gradient descent for learning
 trainstep = tf.train.GradientDescentOptimizer(learning_rate).minimize(error)
+
 
