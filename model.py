@@ -56,22 +56,22 @@ b1 = bias_variable([10])
 a1 = tf.sigmoid(tf.matmul(x, W1) + b1)
 
 ## weights and biases for second hidden layer - 20 neuron
-W2 = xavier_init([10, 20])
-b2 = bias_variable([20])
+W2 = xavier_init([10, 10])
+b2 = bias_variable([10])
 
 #output of second hidden layer
 a2 = tf.sigmoid(tf.matmul(a1, W2)+b2)
 
 #weights and biases for third hidden layer - 10 neuron
-W3 = xavier_init([20, 10])
-b3 = bias_variable([10])
+W3 = xavier_init([10, 5])
+b3 = bias_variable([5])
 
 #output of third hidden layer
 a3 = tf.sigmoid(tf.matmul(a2, W3)+b3)
 
 #weights and biases for output layer - 1 neuron
 # output of second layer/model
-W4 = xavier_init([10, 1])
+W4 = xavier_init([5, 1])
 b4 = bias_variable([1])
 
 y = tf.matmul(a3, W4)+b4
@@ -85,7 +85,7 @@ y_ = tf.placeholder(tf.float32)
 rmslerror = rmsle(y, y_, num_training_inputs)
 
 # mean squared error
-error = tf.losses.mean_squared_error(y_, y)
+error = tf.losses.log_loss(y_, y)
 
 # gradient descent for learning
 trainstep = tf.train.GradientDescentOptimizer(learning_rate).minimize(error)
@@ -121,6 +121,8 @@ with tf.Session() as sess:
 
     for j in tqdm(range(num_epochs)):
         sess.run(trainstep, feed_dict = {x: inputs, y_: expected_outputs})
+        if j % 1000 == 0:
+            print(sess.run(rmslerror, feed_dict={x: inputs, y_: expected_outputs}))
 
     print(sess.run(rmslerror, feed_dict = {x: inputs, y_: expected_outputs}))
 
