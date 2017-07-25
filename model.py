@@ -22,8 +22,8 @@ def rmsle(predicted, real, length):
 
 #### HYPERPARAMETERS
 
-learning_rate = .1
-num_epochs = 10000
+learning_rate = .001
+num_epochs = 1000
 num_training_inputs = 1460
 #list of training files
 filename_queue = tf.train.string_input_producer(["/Users/eliwinkelman/housing/data/5features.csv"])
@@ -45,15 +45,14 @@ features = tf.stack([col1, col2, col3, col4, col5])
 x = tf.placeholder(tf.float32, (None, 5))
 
 ## weights and biases for the first hidden layer - 10 neurons
-W1 = weight_variable([5, 25])
-b1 = bias_variable([25])
+W1 = weight_variable([5, 15])
+b1 = bias_variable([15])
 
 ## output of first hidden layer
 a1 = tf.sigmoid(tf.matmul(x, W1) + b1)
 
-
 ## weights and biases for output layer - 1 neuron
-W2 = weight_variable([25, 1])
+W2 = weight_variable([15, 1])
 b2 = bias_variable([1])
 
 # output of second layer/model
