@@ -15,8 +15,8 @@ def bias_variable(shape):
 
 #### HYPERPARAMETERS
 
-learning_rate = .05
-num_epochs = 10000
+learning_rate = .1
+num_epochs = 1000
 num_training_inputs = 1460
 #list of training files
 filename_queue = tf.train.string_input_producer(["/Users/eliwinkelman/housing/data/5features.csv"])
@@ -38,15 +38,15 @@ features = tf.stack([col1, col2, col3, col4, col5])
 x = tf.placeholder(tf.float32, (None, 5))
 
 ## weights and biases for the first hidden layer - 10 neurons
-W1 = weight_variable([5, 10])
-b1 = bias_variable([10])
+W1 = weight_variable([5, 15])
+b1 = bias_variable([15])
 
 ## output of first hidden layer
 a1 = tf.sigmoid(tf.matmul(x, W1) + b1)
 
 
 ## weights and biases for output layer - 1 neuron
-W2 = weight_variable([10, 1])
+W2 = weight_variable([15, 1])
 b2 = bias_variable([1])
 
 # output of second layer/model
@@ -83,8 +83,9 @@ with tf.Session() as sess:
 
         #add line to inputs/expected outputs
         inputs.append(feature)
-        expected_outputs.append(expected_output)
-
+        expected_outputs.append(expected_output/1000000)
+    coord.request_stop()
+    coord.join(threads)
     inputs = np.resize(inputs, (num_training_inputs, 5))
 
     expected_outputs = np.resize(expected_outputs, (num_training_inputs, 1))
@@ -93,5 +94,4 @@ with tf.Session() as sess:
         sess.run(trainstep, feed_dict = {x: inputs, y_: expected_outputs})
 
     print(sess.run(error, feed_dict={x: inputs, y_:expected_outputs}))
-    coord.request_stop()
-    coord.join(threads)
+
