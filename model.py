@@ -18,7 +18,7 @@ def bias_variable(shape):
 
 learning_rate = .05
 num_epochs = 200
-
+num_training_inputs = 1460
 #list of training files
 filename_queue = tf.train.string_input_producer(["/Users/eliwinkelman/housing/data/5features.csv"])
 #read files
@@ -70,20 +70,20 @@ with tf.Session() as sess:
     init = tf.global_variables_initializer()
     sess.run(init)
 
-    data = np.empty((1, 5))
-    labels = np.array([])
-    for i in range(1460):
+    inputs = []
+    expected_outputs = []
+    for i in range(num_training_inputs):
 
-        example, label = sess.run([features, col6])
+        feature, expected_output = sess.run([features, col6])
 
-        data = np.concatenate((data, example))
-        labels = np.append(labels, label, axis=1)
-
-    print (data)
+        inputs.append(feature)
+        expected_outputs.append(expected_outputs)
+    inputs = np.resize(inputs, (num_training_inputs, 5))
+    print (inputs)
 
     for j in range(num_epochs):
-        sess.run(trainstep, feed_dict = {x: data, y_: labels})
+        sess.run(trainstep, feed_dict = {x: inputs, y_: expected_outputs})
 
-    print(sess.run(error, feed_dict={x: data}))
+    print(sess.run(error, feed_dict={x: inputs}))
     coord.request_stop()
     coord.join(threads)
