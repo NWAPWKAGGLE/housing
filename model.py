@@ -2,10 +2,9 @@ import tensorflow as tf
 from tqdm import tqdm
 import numpy as np
 
-
 ##these functions initialize weights and biases with non-zero values
 def weight_variable(shape):
-    initial = tf.truncated_normal(shape, stddev=0.1)
+    initial = tf.truncated_normal(shape, stddev=.1)
     return tf.Variable(initial)
 
 def bias_variable(shape):
@@ -23,7 +22,7 @@ def rmsle(predicted, real, length):
 #### HYPERPARAMETERS
 
 learning_rate = .001
-num_epochs = 1000
+num_epochs = 10000
 num_training_inputs = 1460
 #list of training files
 filename_queue = tf.train.string_input_producer(["./data/5features.csv"])
@@ -56,7 +55,7 @@ W2 = weight_variable([15, 1])
 b2 = bias_variable([1])
 
 # output of second layer/model
-y = tf.matmul(a1, W2)+b2
+y = tf.tanh(tf.matmul(a1, W2)+b2)
 
 # expected output
 y_ = tf.placeholder(tf.float32)
@@ -70,7 +69,7 @@ rmslerror = rmsle(y, y_, num_training_inputs)
 error = tf.losses.mean_squared_error(y_, y)
 
 # gradient descent for learning
-trainstep = tf.train.GradientDescentOptimizer(learning_rate).minimize(error)
+trainstep = tf.train.AdamOptimizer(learning_rate).minimize(error)
 
 with tf.Session() as sess:
     # Populate filename queue
