@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
 from tqdm import tqdm
+from datetime import datetime
 
 ############ TUNABLE ################
 learning_rate = 0.25
@@ -8,6 +9,10 @@ epochs = 1000000
 hidden_shape = [10]
 activate = tf.sigmoid
 activate_output = False
+error_metric = tf.losses.mean_squared_error
+optimizer = tf.train.GradientDescentOptimizer
+report_interval = 10000
+model_name = 'tftest'
 
 
 def initalize_weights(shape):
@@ -28,8 +33,6 @@ q_vals = qvals + 4
 
 x = tf.placeholder(np.float32, (None, 1))
 y_ = tf.placeholder(np.float32, (None, 1))
-q = tf.placeholder(np.float32, (None, 1))
-q_ = tf.placeholder(np.float32, (None, 1))
 ############### END TUNABLE ################
 
 a_set = [x]
@@ -57,9 +60,10 @@ y = a_set[-1]
 # a2 = tf.matmul(a1, w2) + b2
 # y = a2
 
-err = tf.losses.mean_squared_error(y_, y)
-train = tf.train.GradientDescentOptimizer(learning_rate).minimize(err)
+err = error_metric(y_, y)
+train = optimizer(learning_rate).minimize(err)
 
+saver = tf.train.Saver()
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
 
@@ -68,18 +72,27 @@ with tf.Session() as sess:
 
     for i in tqdm(range(epochs)):
         sess.run(train, feed_dict={x: xvals, y_: yvals})
-        if i % 1000 == 0:
-            print('err')
-            print(sess.run(err, feed_dict={x: xvals, y_: yvals}))
+        if i % report_interval == 0:
             print('y(x)')
             print(sess.run(y, feed_dict={x: xvals}))
 
+            print('y(x) error')
+            measured_error = sess.run(err, feed_dict={x: xvals, y_: yvals})
+            print(measured_error)
+
             print('q')
-            print(sess.run(q, feed_dict={q: qvals}))
-            print('q')
+            print(sess.run(x, feed_dict={x: qvals}))
+            print('y(q)')
             print(sess.run(y, feed_dict={x: qvals}))
+            print('q_')
+            print(sess.run(y_, feed_dict={y_: q_vals}))
+            print('y(q) error')
+            print(sess.run(err, feed_dict={x: qvals, y_: q_vals}))
 
-
+            save_path = "./savedmodels/{0}/{1}__{2}.ckpt".format(
+                model_name, measured_error, str(datetime.now()).replace(':', '_'))
+            save_path = saver.save(sess, save_path)
+            print("Model saved in file: {0}".format(save_path))
 
 
 
