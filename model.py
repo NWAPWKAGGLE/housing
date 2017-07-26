@@ -17,17 +17,16 @@ def bias_variable(shape):
     return tf.Variable(initial)
 
 def rmsle(predicted, real, length):
-    sum=0.0
-
     p = tf.log(predicted*1000000+1)
     r = tf.log(real*1000000+1)
-    sum = tf.reduce_sum(p - r)**2
-    return (sum/length)**0.5
+    sum = tf.reduce_sum(p-r)**2
+    print(sum)
+    return tf.sqrt((sum/length))
 
 #### HYPERPARAMETERS
 
-learning_rate = .04
-num_epochs = 100
+learning_rate = .03
+num_epochs = 10000
 num_training_inputs = 1460
 #list of training files
 filename_queue = tf.train.string_input_producer(["./data/5features.csv"])
@@ -36,34 +35,33 @@ reader = tf.TextLineReader()
 key, value = reader.read(filename_queue)
 
 #default values and type of input
-record_defaults = [[9000], [1989], [3], [6], [2007], [0], [0], [0], [150000]]
+record_defaults = [[9000], [1989], [3], [1], [2007], [5], [5], [950], [0], [800], [6], [400], [0], [150000]]
 
 #read columns
-col1, col2, col3, col4, col5, col6, col7, col8, col9= tf.decode_csv(value, record_defaults=record_defaults)
-features = tf.stack([col1, col2, col3, col4, col5, col6, col7, col8])
-
+col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, col11, col12, col13, col14= tf.decode_csv(value, record_defaults=record_defaults)
+features = tf.stack([col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, col11, col12, col13])
 
 #### MODEL
 
 # this is the placeholder for the input layer. takes an arbitrary size of training set with 5 features in each example
-x = tf.placeholder(tf.float32, (None, 8))
+x = tf.placeholder(tf.float32, (None, 13))
 
 ## weights and biases for the first hidden layer - 10 neurons
-W1 = xavier_init([8, 8])
-b1 = bias_variable([8])
+W1 = xavier_init([13, 10])
+b1 = bias_variable([10])
 
 ## output of first hidden layer
 a1 = tf.sigmoid(tf.matmul(x, W1) + b1)
 
 ## weights and biases for second hidden layer - 20 neuron
-W2 = xavier_init([8, 10])
-b2 = bias_variable([10])
+W2 = xavier_init([10, 15])
+b2 = bias_variable([15])
 
 #output of second hidden layer
 a2 = tf.sigmoid(tf.matmul(a1, W2)+b2)
 
 #weights and biases for third hidden layer - 10 neuron
-W3 = xavier_init([10, 5])
+W3 = xavier_init([15, 5])
 b3 = bias_variable([5])
 
 #output of third hidden layer
@@ -91,8 +89,11 @@ error = tf.losses.log_loss(y_, y)
 trainstep = tf.train.GradientDescentOptimizer(learning_rate).minimize(error)
 
 with tf.Session() as sess:
+
+
     saver = tf.train.Saver()
     saver.restore(sess, "./savedmodels/variableSave.ckpt")
+
 
     # Populate filename queue
     # Start populating the filename queue.
@@ -105,6 +106,8 @@ with tf.Session() as sess:
     init = tf.global_variables_initializer()
     sess.run(init)
     '''
+
+
     #load in data
     inputs = []
     expected_outputs = []
@@ -113,21 +116,22 @@ with tf.Session() as sess:
     for i in tqdm(range(num_training_inputs)):
 
         #grab line value
-        feature, expected_output = sess.run([features, col9])
+        feature, expected_output = sess.run([features, col14])
 
         #scale features appropriately
         feature[0] = feature[0]/1000
         feature[1] = feature[1]/1000
         feature[4] = feature[4]/1000
-        feature[6] = feature[6]/1000
         feature[7] = feature[7]/1000
+        feature[8] = feature[8]/100
+        feature[9] = feature[9] / 100
+        feature[11] = feature[11] / 100
         # add line to inputs/expected outputs
         inputs.append(feature)
         expected_outputs.append(expected_output/1000000)
     coord.request_stop()
     coord.join(threads)
-    inputs = np.resize(inputs, (num_training_inputs, 8))
-
+    inputs = np.resize(inputs, (num_training_inputs, 13))
     expected_outputs = np.resize(expected_outputs, (num_training_inputs, 1))
 
     currentError = sess.run(rmslerror, feed_dict={x: inputs, y_: expected_outputs})
