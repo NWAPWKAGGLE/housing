@@ -2,9 +2,6 @@ import tensorflow as tf
 from tqdm import tqdm
 import numpy as np
 
-
-
-
 ##these functions initialize weights and biases with non-zero values
 def xavier_init(size):
     in_dim = size[0]
@@ -29,8 +26,8 @@ def rmsle(predicted, real, length):
 
 #### HYPERPARAMETERS
 
-learning_rate = .05
-num_epochs = 10000
+learning_rate = .04
+num_epochs = 100
 num_training_inputs = 1460
 #list of training files
 filename_queue = tf.train.string_input_producer(["./data/5features.csv"])
@@ -145,7 +142,7 @@ with tf.Session() as sess:
     print(inputs)
     #variablesaver
 
-    if (sess.run(rmslerror, feed_dict = {x: inputs, y_: expected_outputs}) != 'nan' & currentError > sess.run(rmslerror, feed_dict = {x: inputs, y_: expected_outputs}) ):
+    if ((sess.run(rmslerror, feed_dict = {x: inputs, y_: expected_outputs}) != 'nan') & (currentError > sess.run(rmslerror, feed_dict = {x: inputs, y_: expected_outputs})) ):
         saver = tf.train.Saver()
         save_path=saver.save(sess, "./savedmodels/variableSave.ckpt")
         print("Model saved in file: %s" % save_path)
