@@ -84,7 +84,7 @@ y_ = tf.placeholder(tf.float32)
 rmslerror = rmsle(y, y_, num_training_inputs)
 
 # mean squared error
-error = tf.losses.mean_squared_error(y_, y)
+error = tf.losses.log_loss(y_, y)
 
 # gradient descent for learning
 trainstep = tf.train.GradientDescentOptimizer(learning_rate).minimize(error)
