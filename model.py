@@ -19,64 +19,63 @@ def bias_variable(shape):
 def rmsle(predicted, real, length):
     p = tf.log(predicted*1000000+1)
     r = tf.log(real*1000000+1)
-    sum = tf.reduce_sum(p-r)**2
-    print(sum)
+    sum = tf.pow(tf.reduce_sum(tf.subtract(p, r)), 2)
     return tf.sqrt((sum/length))
 
 #### HYPERPARAMETERS
 
-learning_rate = .03
+load_from_save = True
+learning_rate = .1
 num_epochs = 10000
 num_training_inputs = 1460
 #list of training files
-filename_queue = tf.train.string_input_producer(["./data/5features.csv"])
+filename_queue = tf.train.string_input_producer(["./data/test13.csv"])
 #read files
 reader = tf.TextLineReader()
 key, value = reader.read(filename_queue)
 
 #default values and type of input
-record_defaults = [[9000], [1989], [3], [1], [2007], [5], [5], [950], [0], [800], [6], [400], [0], [150000]]
+record_defaults = [[9000.], [1989.], [3.], [1.], [2007.], [5.], [5.], [950.], [0.], [800.], [6.], [400.], [0.], [1500.], [2.]]
 
 #read columns
-col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, col11, col12, col13, col14= tf.decode_csv(value, record_defaults=record_defaults)
-features = tf.stack([col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, col11, col12, col13])
+col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, col11, col12, col13, col14, col15= tf.decode_csv(value, record_defaults=record_defaults)
+features = tf.stack([col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, col11, col12, col13, col14, col15])
 
 #### MODEL
 
 # this is the placeholder for the input layer. takes an arbitrary size of training set with 5 features in each example
-x = tf.placeholder(tf.float32, (None, 13))
+x = tf.placeholder(tf.float32, (None, 15))
 
 ## weights and biases for the first hidden layer - 10 neurons
-W1 = xavier_init([13, 10])
-b1 = bias_variable([10])
+W1 = xavier_init([15, 30])
+b1 = bias_variable([30])
 
 ## output of first hidden layer
 a1 = tf.sigmoid(tf.matmul(x, W1) + b1)
 
 ## weights and biases for second hidden layer - 20 neuron
-W2 = xavier_init([10, 15])
-b2 = bias_variable([15])
+W2 = xavier_init([30, 20])
+b2 = bias_variable([20])
 
 #output of second hidden layer
 a2 = tf.sigmoid(tf.matmul(a1, W2)+b2)
 
 #weights and biases for third hidden layer - 10 neuron
-W3 = xavier_init([15, 5])
-b3 = bias_variable([5])
+W3 = xavier_init([20, 15])
+b3 = bias_variable([15])
 
 #output of third hidden layer
 a3 = tf.sigmoid(tf.matmul(a2, W3)+b3)
 
 #weights and biases for output layer - 1 neuron
 # output of second layer/model
-W4 = xavier_init([5, 1])
+W4 = xavier_init([15, 1])
 b4 = bias_variable([1])
 
-y = tf.matmul(a3, W4)+b4
+y = tf.sigmoid(tf.matmul(a3, W4)+b4)
 
 # expected output
 y_ = tf.placeholder(tf.float32)
-
 
 # root mean squared logarithmic error
 
@@ -90,22 +89,21 @@ trainstep = tf.train.GradientDescentOptimizer(learning_rate).minimize(error)
 
 with tf.Session() as sess:
 
-
-    saver = tf.train.Saver()
-    saver.restore(sess, "./savedmodels/variableSave.ckpt")
-
+    if load_from_save:
+        saver = tf.train.Saver()
+        saver.restore(sess, "./savedmodels/variableSave.ckpt")
+    else:
+        #don't in initialize because we're loading a saved model
+        #initialize the variables and graph
+        init = tf.global_variables_initializer()
+        sess.run(init)
 
     # Populate filename queue
     # Start populating the filename queue.
     coord = tf.train.Coordinator()
     threads = tf.train.start_queue_runners(coord=coord)
 
-    '''
-    #don't in initialize because we're loading a saved model
-    #initialize the variables and graph
-    init = tf.global_variables_initializer()
-    sess.run(init)
-    '''
+
 
 
     #load in data
@@ -116,7 +114,7 @@ with tf.Session() as sess:
     for i in tqdm(range(num_training_inputs)):
 
         #grab line value
-        feature, expected_output = sess.run([features, col14])
+        feature = sess.run(features)
 
         #scale features appropriately
         feature[0] = feature[0]/1000
@@ -126,12 +124,16 @@ with tf.Session() as sess:
         feature[8] = feature[8]/100
         feature[9] = feature[9] / 100
         feature[11] = feature[11] / 100
+        feature[13] = feature[13] / 100
         # add line to inputs/expected outputs
         inputs.append(feature)
-        expected_outputs.append(expected_output/1000000)
+        #expected_outputs.append(expected_output/1000000)
     coord.request_stop()
     coord.join(threads)
-    inputs = np.resize(inputs, (num_training_inputs, 13))
+    inputs = np.resize(inputs, (num_training_inputs, 15))
+
+    '''
+     print(inputs)
     expected_outputs = np.resize(expected_outputs, (num_training_inputs, 1))
 
     currentError = sess.run(rmslerror, feed_dict={x: inputs, y_: expected_outputs})
@@ -143,7 +145,8 @@ with tf.Session() as sess:
 
     print(sess.run(rmslerror, feed_dict = {x: inputs, y_: expected_outputs}))
     print(sess.run(y, feed_dict = {x: inputs}))
-    print(inputs)
+    print(expected_outputs)
+
     #variablesaver
 
     if ((sess.run(rmslerror, feed_dict = {x: inputs, y_: expected_outputs}) != 'nan') & (currentError > sess.run(rmslerror, feed_dict = {x: inputs, y_: expected_outputs})) ):
@@ -151,6 +154,11 @@ with tf.Session() as sess:
         save_path=saver.save(sess, "./savedmodels/variableSave.ckpt")
         print("Model saved in file: %s" % save_path)
 
+    
+    '''
+
+
+    np.savetxt('predictions4.csv', 1000000*sess.run(y, feed_dict = {x: inputs}), delimiter=',', fmt="%f")
     #variablerestore
 
     #saver.restore(sess, "./savedmodels/variableSave")
