@@ -94,15 +94,20 @@ error = tf.losses.log_loss(y_, y)
 trainstep = tf.train.GradientDescentOptimizer(learning_rate).minimize(error)
 
 with tf.Session() as sess:
+    saver = tf.train.Saver()
+    saver.restore(sess, "./savedmodels/variableSave.ckpt")
+
     # Populate filename queue
     # Start populating the filename queue.
     coord = tf.train.Coordinator()
     threads = tf.train.start_queue_runners(coord=coord)
 
+    '''
+    #don't in initialize because we're loading a saved model
     #initialize the variables and graph
     init = tf.global_variables_initializer()
     sess.run(init)
-
+    '''
     #load in data
     inputs = []
     expected_outputs = []
@@ -128,6 +133,8 @@ with tf.Session() as sess:
 
     expected_outputs = np.resize(expected_outputs, (num_training_inputs, 1))
 
+    currentError = sess.run(rmslerror, feed_dict={x: inputs, y_: expected_outputs})
+
     for j in tqdm(range(num_epochs)):
         sess.run(trainstep, feed_dict = {x: inputs, y_: expected_outputs})
         if j % 1000 == 0:
@@ -138,14 +145,13 @@ with tf.Session() as sess:
     print(inputs)
     #variablesaver
 
-    if (sess.run(rmslerror, feed_dict = {x: inputs, y_: expected_outputs}) != 'nan'):
+    if (sess.run(rmslerror, feed_dict = {x: inputs, y_: expected_outputs}) != 'nan' & currentError > sess.run(rmslerror, feed_dict = {x: inputs, y_: expected_outputs}) ):
         saver = tf.train.Saver()
-        save_path=saver.save(sess, "./savedmodels/variableSave")
+        save_path=saver.save(sess, "./savedmodels/variableSave.ckpt")
         print("Model saved in file: %s" % save_path)
-
 
     #variablerestore
 
-    saver.restore(sess, "./savedmodels/variableSave")
-    print("Model restored.")
+    #saver.restore(sess, "./savedmodels/variableSave")
+    #print("Model restored.")
 
