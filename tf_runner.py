@@ -17,16 +17,30 @@ def initialize_biases(shape):
 # TODO: Refactor generation of variables and placeholders to be accessible by name
 
 class TFRunner:
-    def __init__(self, model_name, shape, dtype=np.float32, save_dir='./model_saves/'):
+    @classmethod
+    def new(cls, model_name, shape, dtype=np.float32):
+        x = tf.placeholder(dtype, (None, shape[0]), name='x')
+        y_ = tf.placeholder(dtype, (None, shape[-1]), name='y_')
+
+    @classmethod
+    def load(cls, filename):
+        saver = tf.train.import_meta_graph(filename + ".meta")
+        saver.restore(self.sess, filename)
+        graph = tf.get_default_graph()
+        self.y = graph.get_tensor_by_name('y:0')
+        self.x = graph.get_tensor_by_name('x:0')
+        self.y_ = graph.get_tensor_by_name('y_:0')
+        self.trained = True
+
+    def __init__(self, model_name, shape):
         self.managed = False
         self.trained = False
         if len(shape) < 2:
             raise ValueError("Shape must be at least 2 in length")
 
         self.shape = shape
-        self.x = tf.placeholder(dtype, (None, shape[0]))
-        self.y_ = tf.placeholder(dtype, (None, shape[-1]))
-        self.y = None
+        self.x_placeholder = tf.placeholder(dtype, (None, shape[0]), name='x')
+        self.y__placeholder = tf.placeholder(dtype, (None, shape[-1]), name='y_')
         self.model_name = model_name
         self.dtype = dtype
         self.save_dir = path.join(save_dir, model_name)
@@ -41,6 +55,27 @@ class TFRunner:
         self.managed = False
         self.sess.close()
 
+    @staticmethod
+    def _build_net(x_placeholder, shape, weights_generator, bias_generator, activator, activate_output):
+        a_set = [x_placeholder]
+        for i in range(len(shape) - 1):
+            up_size = shape[i]
+            down_size = shape[i + 1]
+
+            print('on layer with up {0} and down {1}'.format(up_size, down_size))
+
+            w = tf.Variable(weights_generator([up_size, down_size]))
+            b = tf.Variable(bias_generator([down_size]))
+            if (i < len(shape) - 2):  # output
+                if activate_output:
+                    a_set.append(activator(tf.matmul(a_set[-1], w) + b, name='y'))
+                else:
+                    a_set.append(tf.add(tf.matmul(a_set[-1], w), b, name='y'))
+            else:  # upstream
+                a_set.append(tf.matmul(a_set[-1], w) + b)
+        return a_set[-1]
+
+
     def learn(self, xvals, y_vals, epochs, learning_rate, report_interval=10000,
               qvals=None, q_vals=None, error_metric=tf.losses.mean_squared_error,
               optimizer=tf.train.GradientDescentOptimizer, activator=tf.sigmoid,
@@ -49,26 +84,9 @@ class TFRunner:
         if not self.managed:
             raise RuntimeError("Class TFRunner must be resource-managed by _with_ statement")
         if not self.trained:
-            a_set = [self.x]
-            w_set = []
-            b_set = []
-            for i in range(len(self.shape) - 1):
-                up_size = self.shape[i]
-                down_size = self.shape[i + 1]
+            self.y = TFRunner._build_net(self.x, self.shape, weights_generator, bias_generator, activator,
+                                         activate_output)
 
-                print('on layer with up {0} and down {1}'.format(up_size, down_size))
-
-                w = tf.Variable(weights_generator([up_size, down_size]))
-                b = tf.Variable(bias_generator([down_size]))
-                w_set.append(w)
-                b_set.append(b)
-                if (i < len(self.shape) - 2) or activate_output:
-                    a_set.append(activator(tf.matmul(a_set[-1], w) + b))
-                else:
-                    a_set.append(tf.matmul(a_set[-1], w) + b)
-            self.y = a_set[-1]
-        else:
-            ...
         err = error_metric(self.y_, self.y)
         train = optimizer(learning_rate).minimize(err)
 
@@ -89,13 +107,13 @@ class TFRunner:
 
                 if (qvals is not None) and (q_vals is not None):
                     print('q')
-                    print(self.sess.run(x, feed_dict={x: qvals}))
+                    print(self.sess.run('x', feed_dict={'x': qvals}))
                     print("y(q)")
-                    print(self.sess.run(y, feed_dict={x: qvals}))
+                    print(self.sess.run('y', feed_dict={'x': qvals}))
                     print("q_")
-                    print(self.sess.run(y_, feed_dict={y_: q_vals}))
+                    print(self.sess.run('y_', feed_dict={'y_': q_vals}))
                     print("y(q) error")
-                    print(self.sess.run(err, feed_dict={x: qvals, y_: q_vals}))
+                    print(self.sess.run(err, feed_dict={'x': qvals, 'y_': q_vals}))
 
                 save_path = path.join(self.save_dir,
                                       '{1}__{2}.ckpt'.format(measured_error, str(datetime.now()).replace(':', '_')))
@@ -104,10 +122,13 @@ class TFRunner:
 
         self.trained = True
 
-    def load(self, filename=None):
-        saver = tf.train.Saver()
-        if filename is not None:
-            saver.restore(self.sess, filename)
-            self.trained = True
+    def run(self, vals, q_vals=None):
+        if not self.trained:
+            raise RuntimeError("Model is untrained")
         else:
-            raise NotImplementedError("Most recent save open isn't implemented yet")
+            return self.sess.run(self.y, feed_dict={self.x: vals})
+
+
+if __name__ == '__main__':
+    with TFRunner('tftest', [1, 10, 1]) as runner:
+        pass
