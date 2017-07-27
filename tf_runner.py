@@ -5,7 +5,6 @@ from datetime import datetime
 from multiprocessing import Process, Pipe
 from os import path
 
-
 def initialize_weights(shape):
     return tf.truncated_normal(shape, stddev=.1)
 
@@ -32,17 +31,16 @@ class TFRunner:
         self.y_ = graph.get_tensor_by_name('y_:0')
         self.trained = True
 
-    def __init__(self, model_name, shape):
+    def __init__(self, model_name, shape, save_dir):
         self.managed = False
         self.trained = False
         if len(shape) < 2:
             raise ValueError("Shape must be at least 2 in length")
-
         self.shape = shape
-        self.x_placeholder = tf.placeholder(dtype, (None, shape[0]), name='x')
-        self.y__placeholder = tf.placeholder(dtype, (None, shape[-1]), name='y_')
+        self.x_placeholder = tf.placeholder(tf.float32, (None, shape[0]), name='x')
+        self.y__placeholder = tf.placeholder(tf.float32, (None, shape[-1]), name='y_')
         self.model_name = model_name
-        self.dtype = dtype
+        #self.dtype = dtype
         self.save_dir = path.join(save_dir, model_name)
 
     def __enter__(self):
@@ -74,7 +72,6 @@ class TFRunner:
             else:  # upstream
                 a_set.append(tf.matmul(a_set[-1], w) + b)
         return a_set[-1]
-
 
     def learn(self, xvals, y_vals, epochs, learning_rate, report_interval=10000,
               qvals=None, q_vals=None, error_metric=tf.losses.mean_squared_error,
