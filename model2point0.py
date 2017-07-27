@@ -15,6 +15,31 @@ validation_features = np.genfromtxt("../data/validationfeatures.csv", delimiter=
 training_expected = np.delete(training_expected, 1, axis=1)
 validation_expected = np.delete(validation_expected, 1, axis=1)
 
+#scale outputs
+training_expected = training_expected/1000000
+validation_expected = validation_expected/1000000
+
+#scale features
+for i in range(len(training_features)):
+    training_features[i][0] = training_features[i][0] / 1000
+    training_features[i][1] = training_features[i][1] / 1000
+    training_features[i][4] = training_features[i][4] / 1000
+    training_features[i][7] = training_features[i][7] / 1000
+    training_features[i][8] = training_features[i][8] / 100
+    training_features[i][9] = training_features[i][9] / 100
+    training_features[i][11] = training_features[i][11] / 100
+    training_features[i][13] = training_features[i][13] / 100
+
+for i in range(len(validation_features)):
+    validation_features[i][0] = validation_features[i][0] / 1000
+    validation_features[i][1] = validation_features[i][1] / 1000
+    validation_features[i][4] = validation_features[i][4] / 1000
+    validation_features[i][7] = validation_features[i][7] / 1000
+    validation_features[i][8] = validation_features[i][8] / 100
+    validation_features[i][9] = validation_features[i][9] / 100
+    validation_features[i][11] = validation_features[i][11] / 100
+    validation_features[i][13] = validation_features[i][13] / 100
+
 
 ####Hyperparams
 learning_rate = .05
