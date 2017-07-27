@@ -29,16 +29,16 @@ learning_rate = .1
 num_epochs = 10000
 num_training_inputs = 1460
 #list of training files
-filename_queue = tf.train.string_input_producer(["./data/test13.csv"])
+filename_queue = tf.train.string_input_producer(["./data/5features.csv"])
 #read files
 reader = tf.TextLineReader()
 key, value = reader.read(filename_queue)
 
 #default values and type of input
-record_defaults = [[9000.], [1989.], [3.], [1.], [2007.], [5.], [5.], [950.], [0.], [800.], [6.], [400.], [0.], [1500.], [2.]]
+record_defaults = [[9000.], [1989.], [3.], [1.], [2007.], [5.], [5.], [950.], [0.], [800.], [6.], [400.], [0.], [1500.], [2.], [150000.]]
 
 #read columns
-col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, col11, col12, col13, col14, col15= tf.decode_csv(value, record_defaults=record_defaults)
+col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, col11, col12, col13, col14, col15, col16= tf.decode_csv(value, record_defaults=record_defaults)
 features = tf.stack([col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, col11, col12, col13, col14, col15])
 
 #### MODEL
@@ -114,7 +114,7 @@ with tf.Session() as sess:
     for i in tqdm(range(num_training_inputs)):
 
         #grab line value
-        feature = sess.run(features)
+        feature, expected_output= sess.run([features, col16])
 
         #scale features appropriately
         feature[0] = feature[0]/1000
@@ -127,13 +127,12 @@ with tf.Session() as sess:
         feature[13] = feature[13] / 100
         # add line to inputs/expected outputs
         inputs.append(feature)
-        #expected_outputs.append(expected_output/1000000)
+        expected_outputs.append(expected_output/1000000)
     coord.request_stop()
     coord.join(threads)
     inputs = np.resize(inputs, (num_training_inputs, 15))
 
-    '''
-     print(inputs)
+    print(inputs)
     expected_outputs = np.resize(expected_outputs, (num_training_inputs, 1))
 
     currentError = sess.run(rmslerror, feed_dict={x: inputs, y_: expected_outputs})
@@ -154,11 +153,8 @@ with tf.Session() as sess:
         save_path=saver.save(sess, "./savedmodels/variableSave.ckpt")
         print("Model saved in file: %s" % save_path)
 
-    
-    '''
 
-
-    np.savetxt('predictions4.csv', 1000000*sess.run(y, feed_dict = {x: inputs}), delimiter=',', fmt="%f")
+    #np.savetxt('predictions3.csv', 1000000*sess.run(y, feed_dict = {x: inputs}), delimiter=',', fmt="%f")
     #variablerestore
 
     #saver.restore(sess, "./savedmodels/variableSave")

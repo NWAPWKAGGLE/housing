@@ -8,7 +8,6 @@ from tqdm import tqdm
 
 debug = False
 
-
 class NeuralNet:
     """
         A deep neural net, implemented on top of TensorFlow. Supports saving and loading. Debug info can be output by
@@ -177,6 +176,12 @@ class NeuralNet:
         :return: A rank-1 tf.Tensor representing the biases.
         """
         return tf.constant(0.1, shape=shape)
+
+    @staticmethod
+    def xavier_weight_generator(shape):
+        in_dim = shape[0]
+        xavier_stddev = 1. / tf.sqrt(in_dim / 2.)
+        return tf.Variable(tf.random_normal(shape=shape, stddev=xavier_stddev))
 
     def learn(self, xvals, y_vals, epochs, report_interval=10000, save_dir=path.join('', 'model_saves')):
         """
