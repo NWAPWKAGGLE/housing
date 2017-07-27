@@ -16,7 +16,7 @@ qvals = xvals + 2
 q_vals = qvals + 4
 tvals = xvals - 3
 
-with NeuralNet.new('tftest3', [1, 10, 1], base_learning_rate=learning_rate, activate_output=False) as net:
+with NeuralNet.new('tftest3', [1, 10, 1], optimizer_params=learning_rate, activate_output=False) as net:
     net.learn(xvals, y_vals, epochs, report_interval=report_interval)
     net.validate(qvals, q_vals)
     net.feed_forward(tvals)
@@ -24,4 +24,4 @@ with NeuralNet.new('tftest3', [1, 10, 1], base_learning_rate=learning_rate, acti
 print('net exited')
 
 with NeuralNet.load('tftest3') as net:
-    net.feed_forward(tvals)
+    print(net.feed_forward(tvals))
