@@ -1,2 +1,0 @@
-model_checkpoint_path: "variableSave.ckpt"
-all_model_checkpoint_paths: "variableSave.ckpt"
