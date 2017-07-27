@@ -8,7 +8,6 @@ from tqdm import tqdm
 
 debug = False
 
-
 class NeuralNet:
     @classmethod
     def new(cls, model_name, shape, base_learning_rate=0.001, dtype=np.float32, weight_generator=None,
@@ -90,7 +89,9 @@ class NeuralNet:
 
     @staticmethod
     def xavier_weight_generator(shape):
-        raise NotImplementedError("Xavier generation isn't implemented yet")
+        in_dim = shape[0]
+        xavier_stddev = 1. / tf.sqrt(in_dim / 2.)
+        return tf.Variable(tf.random_normal(shape=shape, stddev=xavier_stddev))
 
     def learn(self, xvals, y_vals, epochs, report_interval=10000, save_dir=path.join('', 'model_saves')):
         if not self.managed:
