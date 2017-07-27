@@ -18,7 +18,7 @@ for j in tqdm(range(len(qualitativedata[0]))):
         try:
             if (options[j].index(qualitativedata[i][j])):
                 quantitativedata[j].append(options[j].index(qualitativedata[i][j]))
-                print("worked")
+
         except:
             options[j].append(qualitativedata[i][j])
             print(options[j])
@@ -26,6 +26,7 @@ for j in tqdm(range(len(qualitativedata[0]))):
 
 #transpose the array
 output = np.array(quantitativedata).transpose()
+
 #delete the first initialization values
 output = np.delete(output, 0, axis=0)
 print(output)
