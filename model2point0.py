@@ -2,14 +2,18 @@ import tensorflow as tf
 from tf_runner import NeuralNet
 from tqdm import tqdm
 import numpy as np
+import matplotlib.pyplot as plt
 
 #load training features and expected outputs
-training_features = np.genfromtxt("../data/trainfeatures.csv", delimiter=',', dtype=None)
-training_expected = np.genfromtxt("../data/trainexpected.csv", delimiter=',', dtype=None)
+training_features = np.genfromtxt("./data/trainfeaturesnew.csv", delimiter=',', dtype=None)
+training_expected = np.genfromtxt("./data/trainexpectednew.csv", delimiter=',', dtype=None)
 
 #load validation features and expected outputs
-validation_expected = np.genfromtxt("../data/validationexpected.csv", delimiter=',', dtype=None)
-validation_features = np.genfromtxt("../data/validationfeatures.csv", delimiter=',', dtype=None)
+validation_expected = np.genfromtxt("./data/validationexpectednew.csv", delimiter=',', dtype=None)
+validation_features = np.genfromtxt("./data/validationfeaturesnew.csv", delimiter=',', dtype=None)
+
+#load test data
+test_features = np.genfromtxt("./data/testfeaturesnew.csv", delimiter=',', dtype=None)
 
 #delete extra column from expected outputs
 training_expected = np.delete(training_expected, 1, axis=1)
@@ -40,20 +44,46 @@ for i in range(len(validation_features)):
     validation_features[i][11] = validation_features[i][11] / 100
     validation_features[i][13] = validation_features[i][13] / 100
 
+for i in range(len(test_features)):
+    test_features[i][0] = test_features[i][0] / 1000
+    test_features[i][1] = test_features[i][1] / 1000
+    test_features[i][4] = test_features[i][4] / 1000
+    test_features[i][7] = test_features[i][7] / 1000
+    test_features[i][8] = test_features[i][8] / 100
+    test_features[i][9] = test_features[i][9] / 100
+    test_features[i][11] = test_features[i][11] / 100
+    test_features[i][13] = test_features[i][13] / 100
 
 ####Hyperparams
-learning_rate = .05
-epochs = 10000
-shape = [57, 100, 70, 50, 30, 20, 10, 1]
+learning_rate = .01
+epochs = 100
+shape = [56, 300, 200, 100, 50, 25, 10, 1]
 activate_output = True
 report_interval = 1000
-model_name = "model2point0"
-
-with NeuralNet.new(model_name, shape, optimizer_params=learning_rate, activate_output=True) as NN:
-    NN.learn(training_features, training_expected, epochs, report_interval=report_interval)
-    NN.validate(validation_features, validation_expected)
+model_name = "model2point0point5"
 
 
+training_errors = []
+validation_errors = []
+
+
+with NeuralNet.new(model_name, shape=shape, activate_output=activate_output, optimizer_params=learning_rate) as NN:
+    print("starting model")
+    for i in range(100):
+        NN.learn(training_features, training_expected, epochs, report_interval=report_interval)
+        training_errors.append(NN.learn(training_features, training_expected, epochs, report_interval=report_interval))
+        validation_errors.append(NN.validate(validation_features, validation_expected))
+        validation_output = NN.feed_forward(validation_features)
+        plt.clf()
+        plt.plot(1000000*validation_output)
+        plt.plot(1000000*validation_expected)
+        plt.savefig('./graphs/convergence{0}'.format(i), bbox_inches='tight')
+
+    plt.clf()
+    plt.plot(training_errors, label='training error')
+    plt.plot(validation_errors, label='validation error')
+    
+    np.savetxt("./data/testoutputs.csv", 1000000*NN.feed_forward(test_features), delimiter=",", fmt="%f")
 
 
 
