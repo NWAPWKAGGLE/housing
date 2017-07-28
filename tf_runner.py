@@ -211,7 +211,7 @@ class NeuralNet:
             self.sess.run('train', feed_dict={'x:0': xvals, 'y_:0': y_vals})
             if (i % report_interval == 0) or (i + 1 == epochs):
                 last_error = self.sess.run('err:0', feed_dict={'y_:0': y_vals, 'x:0': xvals})
-                save_path = self._save(save_dir, measured_error, i, epochs)
+                save_path = self._save(save_dir, last_error, i, epochs)
                 if debug:
                     y = self.sess.run('y:0', feed_dict={'x:0': xvals})
                     print('y(x)')
