@@ -219,8 +219,8 @@ class NeuralNet:
                     print('y(x) measured error')
                     print(last_error)
                     print("Model saved in file: {0}".format(save_path))
-        return last_error
         self.trained = True
+        return last_error
 
     def _save(self, save_dir, err, i, epochs):
         """
