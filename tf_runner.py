@@ -8,6 +8,9 @@ from tqdm import tqdm
 
 debug = False
 
+
+# TODO: Add validation-set error checking while learning
+
 class NeuralNet:
     """
         A deep neural net, implemented on top of TensorFlow. Supports saving and loading. Debug info can be output by
@@ -183,7 +186,8 @@ class NeuralNet:
         xavier_stddev = 1. / tf.sqrt(in_dim / 2.)
         return tf.Variable(tf.random_normal(shape=shape, stddev=xavier_stddev))
 
-    def learn(self, xvals, y_vals, epochs, report_interval=10000, save_dir=path.join('', 'model_saves')):
+    def learn(self, xvals, y_vals, epochs, report_interval=10000, save_dir=path.join('', 'model_saves'),
+              progress_bar=False):
         """
         Optimize the weights and biases to match xvals with y_vals as closely as possible. Optimization is performed
         epochs times and save files are generated every report_interval epochs.
@@ -192,6 +196,7 @@ class NeuralNet:
         :param epochs: The number of epochs to train for.
         :param report_interval: The epoch interval at which to generate save files.
         :param save_dir: Optional save directory. Defaults to './model_saves'.
+        :param progress_bar: If true, a TQDM progress bar is displayed on stdout.
         :raises RuntimeError: if the TFRunner instance is not resource managed.
         """
         if not self.managed:
@@ -200,19 +205,21 @@ class NeuralNet:
             print(self.sess.run('x:0', feed_dict={'x:0': xvals}))
             print(self.sess.run('y_:0', feed_dict={'y_:0': y_vals}))
 
-        epoch_iter = tqdm(range(epochs)) if debug else range(epochs)
+        epoch_iter = tqdm(range(epochs)) if progress_bar else range(epochs)
+        last_error = -1.0
         for i in epoch_iter:
             self.sess.run('train', feed_dict={'x:0': xvals, 'y_:0': y_vals})
             if (i % report_interval == 0) or (i + 1 == epochs):
-                measured_error = self.sess.run('err:0', feed_dict={'y_:0': y_vals, 'x:0': xvals})
+                last_error = self.sess.run('err:0', feed_dict={'y_:0': y_vals, 'x:0': xvals})
                 save_path = self._save(save_dir, measured_error, i, epochs)
                 if debug:
                     y = self.sess.run('y:0', feed_dict={'x:0': xvals})
                     print('y(x)')
                     print(y)
                     print('y(x) measured error')
-                    print(measured_error)
+                    print(last_error)
                     print("Model saved in file: {0}".format(save_path))
+        return last_error
         self.trained = True
 
     def _save(self, save_dir, err, i, epochs):
