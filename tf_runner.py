@@ -1,22 +1,22 @@
 from datetime import datetime
 from glob import iglob
-from os import path
+import os
 
 import numpy as np
 import tensorflow as tf
 from tqdm import tqdm
 
-debug = False
+verbose = False
 
+if not verbose:
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-# TODO: Add validation-set error checking while learning
 
 class NeuralNet:
     """
         A deep neural net, implemented on top of TensorFlow. Supports saving and loading. Debug info can be output by
-        setting debug = True in the module namespace.
+        setting verbose = True in the module namespace.
     """
-
 
     @classmethod
     def new(cls, model_name, shape, optimizer_params, dtype=np.float32, weight_generator=None,
@@ -66,7 +66,7 @@ class NeuralNet:
         return cls(model_name)
 
     @classmethod
-    def load(cls, model_name, file_name=None, save_dir=path.join('', 'model_saves')):
+    def load(cls, model_name, file_name=None, save_dir=os.path.join('', 'model_saves')):
         """
             Load a previously saved neural net for a particular model. Behavior is undefined if the model was not
             output by an instance of NeuralNet.
@@ -78,9 +78,9 @@ class NeuralNet:
         :return: A trained instance of NeuralNet.
         """
         if file_name is None:
-            selector = path.join(save_dir, model_name, '*.ckpt.meta')
-            newest = max(iglob(selector), key=path.getctime)
-            if debug:
+            selector = os.path.join(save_dir, model_name, '*.ckpt.meta')
+            newest = max(iglob(selector), key=os.path.getctime)
+            if verbose:
                 print(newest)
             file_name = newest
         return cls(model_name, file_name)
@@ -148,7 +148,7 @@ class NeuralNet:
             up_size = shape[i]
             down_size = shape[i + 1]
 
-            if debug:
+            if verbose:
                 print('mid-layer [{0}, {1}]'.format(up_size, down_size))
 
             w = tf.Variable(weight_generator([up_size, down_size]))
@@ -186,7 +186,7 @@ class NeuralNet:
         xavier_stddev = 1. / tf.sqrt(in_dim / 2.)
         return tf.Variable(tf.random_normal(shape=shape, stddev=xavier_stddev))
 
-    def learn(self, xvals, y_vals, epochs, report_interval=10000, save_dir=path.join('', 'model_saves'),
+    def learn(self, xvals, y_vals, epochs, report_interval=10000, save_dir=os.path.join('', 'model_saves'),
               progress_bar=False):
         """
         Optimize the weights and biases to match xvals with y_vals as closely as possible. Optimization is performed
@@ -197,11 +197,12 @@ class NeuralNet:
         :param report_interval: The epoch interval at which to generate save files.
         :param save_dir: Optional save directory. Defaults to './model_saves'.
         :param progress_bar: If true, a TQDM progress bar is displayed on stdout.
+        :return: The calculated error after the last epoch.
         :raises RuntimeError: if the TFRunner instance is not resource managed.
         """
         if not self.managed:
             raise RuntimeError("Class TFRunner must be resource-managed by _with_ statement")
-        if debug:
+        if verbose:
             print(self.sess.run('x:0', feed_dict={'x:0': xvals}))
             print(self.sess.run('y_:0', feed_dict={'y_:0': y_vals}))
 
@@ -212,7 +213,7 @@ class NeuralNet:
             if (i % report_interval == 0) or (i + 1 == epochs):
                 last_error = self.sess.run('err:0', feed_dict={'y_:0': y_vals, 'x:0': xvals})
                 save_path = self._save(save_dir, last_error, i, epochs)
-                if debug:
+                if verbose:
                     y = self.sess.run('y:0', feed_dict={'x:0': xvals})
                     print('y(x)')
                     print(y)
@@ -236,9 +237,10 @@ class NeuralNet:
         """
         if not self.managed:
             raise RuntimeError("TFRunner must be in with statement")
-        s_path = path.join(save_dir, self.model_name, '{0}__{1}_{2}__{3}.ckpt'.format(err, i, epochs,
-                                                                                      str(datetime.now()).replace(':',
-                                                                                                                  '_')))
+        s_path = os.path.join(save_dir, self.model_name, '{0}__{1}_{2}__{3}.ckpt'.format(err, i, epochs,
+                                                                                         str(datetime.now()).replace(
+                                                                                             ':',
+                                                                                             '_')))
         return self.saver.save(self.sess, s_path)
 
     def validate(self, qvals, q_vals):
@@ -256,7 +258,7 @@ class NeuralNet:
                 raise RuntimeError("This TFRunner has not been trained yet")
             else:
                 measured_error = self.sess.run('err:0', feed_dict={'x:0': qvals, 'y_:0': q_vals})
-                if debug:
+                if verbose:
                     print("q")
                     print(self.sess.run('x:0', feed_dict={'x:0': qvals}))
                     print("y(q)")
@@ -281,7 +283,7 @@ class NeuralNet:
                 raise RuntimeError("This TFRunner has not been trained yet")
             else:
                 result = self.sess.run('y:0', feed_dict={'x:0': tvals})
-                if debug:
+                if verbose:
                     print("t")
                     print(self.sess.run('x:0', feed_dict={'x:0': tvals}))
                     print("y(t)")
