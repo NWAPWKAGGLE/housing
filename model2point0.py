@@ -6,10 +6,10 @@ import matplotlib.pyplot as plt
 
 #load training features and expected outputs
 training_features = np.genfromtxt("./data/trainfeaturesnew.csv", delimiter=',', dtype=None)
-training_expected = np.genfromtxt("./data/trainexpectednew.csv", delimiter=',', dtype=None)
+training_expected = np.genfromtxt("./data/trainexpected.csv", delimiter=',', dtype=None)
 
 #load validation features and expected outputs
-validation_expected = np.genfromtxt("./data/validationexpectednew.csv", delimiter=',', dtype=None)
+validation_expected = np.genfromtxt("./data/validationexpected.csv", delimiter=',', dtype=None)
 validation_features = np.genfromtxt("./data/validationfeaturesnew.csv", delimiter=',', dtype=None)
 
 #load test data
@@ -55,12 +55,12 @@ for i in range(len(test_features)):
     test_features[i][13] = test_features[i][13] / 100
 
 ####Hyperparams
-learning_rate = .01
+learning_rate = .05
 epochs = 100
-shape = [56, 300, 200, 100, 50, 25, 10, 1]
+shape = [33, 1000, 750, 550, 100, 50, 1]
 activate_output = True
 report_interval = 1000
-model_name = "model2point0point5"
+model_name = "model2point0point8"
 
 
 training_errors = []
@@ -82,7 +82,8 @@ with NeuralNet.new(model_name, shape=shape, activate_output=activate_output, opt
     plt.clf()
     plt.plot(training_errors, label='training error')
     plt.plot(validation_errors, label='validation error')
-    
+    plt.show()
+
     np.savetxt("./data/testoutputs.csv", 1000000*NN.feed_forward(test_features), delimiter=",", fmt="%f")
 
 
